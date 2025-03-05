@@ -1,5 +1,6 @@
 import tkinter as tk
 import os
+import time
 from tkinter import ttk
 from tabulate import tabulate
 
@@ -30,20 +31,58 @@ def fichier_choix():
 
     fichiers = sorted([f for f in os.listdir(chemin_dossier) if os.path.isfile(os.path.join(chemin_dossier, f))])
     fichier_chemin = os.path.abspath(os.path.join(chemin_dossier, fichiers[choix]))
-    print(fichier_chemin)
+
+    return(fichier_chemin)
 
 
 
-def afficher_tableau():
-    # Définition des données avec colonne États (E/S) et Étapes
-    headers = ["E/S", "État", "a", "b", "c"]
-    data =   [
-        ["E", "0", "0,1", "0,4", "0"],
-        ["", "1", "--", "--", "2"],
-        ["", "2", "--", "3", "--"],
-        ["S", "3", "3", "--", "--"],
-        ["S", "4", "--", "--", "2"],
-    ]
+def afficher_tableau(fichier_choisi):
+    alphabet = "abcdefghijklmnopqrstuvxyz"
+    headers = []
+
+    #création du header en utilisant la première ligne de l'automate
+    headers.extend(["E/S","E"])
+    with open(fichier_choisi, "r") as paramètre:
+        nb_symbole = paramètre.readline()
+        print(nb_symbole)
+        for i in range(0,int(nb_symbole)):
+            headers.append(alphabet[i])
+
+    data = [[]]
+    i = 0
+    with open("Automate/sorted_output.txt","r") as sort:
+        all_line = sort.readlines()
+    with open("Automate/sorted_output.txt","r") as so, open(fichier_choisi,"r") as fc:
+        lines = fc.readlines()
+        nb_etat = lines[0]
+        etat_initiaux = lines[2][:0] + lines[2][0 + 1:]
+        etat_finaux = lines[3][:0] + lines[3][0 + 1:]
+        print("etat_finaux :", etat_finaux)
+        print("etat_initiaux :", etat_initiaux)
+        line = so.readline()
+        print(line)
+        while(line in all_line):
+            executer = False
+            temp = []
+            for i in range(0,int(nb_etat)):
+                splitline = line.split()
+                if splitline[0] in etat_initiaux and splitline[0] in etat_finaux and executer == False:
+                    temp.extend(["E/S",splitline[0]])
+                    executer = True
+                elif splitline[0] in etat_initiaux and splitline[0] not in etat_finaux and executer == False:
+                    temp.extend(["E",splitline[0]])
+                    executer = True
+                elif splitline[0] not in etat_initiaux and splitline[0] in etat_finaux and executer == False:
+                    temp.extend(["S",splitline[0]])
+                    executer = True
+                elif splitline[0] not in etat_initiaux and splitline[0] not in etat_finaux and executer == False:
+                    temp.extend(["--",splitline[0]])
+                    executer = True
+                temp.append(splitline[2])
+                line = so.readline()
+            data.append(temp)
+
+
     
     # Affichage du tableau dans le terminal avec bordures
     print(tabulate(data, headers, tablefmt="grid"))
@@ -72,7 +111,56 @@ def afficher_tableau():
     # Lancer l'interface
     root.mainloop()
 
+def process_file(input_file):
+    """
+    Lit un fichier text d'on le chemin a été donné en argument
+    """
+    
+    
+    try:
+        with open(input_file, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+
+        # vérifie que le fichier fait plus de 5 lignes
+        if len(lines) < 5:
+            print("Le fichier contient moins de 5 lignes. Rien à traiter.")
+            return None
+
+        # ignore les 5 premières lignes puis extrait le reste 
+        selected_lines = lines[5:]
+
+        # tri les lignes extrait en fonction du numéro de l'état
+        sorted_lines = sorted(selected_lines, key=lambda line: (line.split()[0] if len(line.split()) > 0 else "", line.split()[1] if len(line.split()) > 1 else ""))
+        # crée un fichier text qui contenir l'output de la fonction
+        directory = os.path.dirname(input_file)
+        output_file = os.path.join(directory, "sorted_output.txt")
+
+        # écrit le contenue dans le fichier output
+        with open(output_file, "w", encoding="utf-8") as file:
+            file.writelines(sorted_lines)
+
+        print(f"Le contenu trié a été sauvegardé dans : {output_file}")
+        return output_file
+
+    except FileNotFoundError:
+        print("Erreur : Fichier non trouvé.")
+    except Exception as e:
+        print(f"Une erreur s'est produite : {e}")
+    
 
 if __name__ == "__main__":
-    #print(fichier_choix())
-    afficher_tableau()
+    filename = "Automate/sorted_output.txt"
+
+    # regarde si un fichier "sorted_output.txt" existe
+    if os.path.exists(filename):
+        os.remove(filename)  # supprime le fichier si il existe
+        print(f"{filename} has been deleted.")
+    else:
+        print(f"{filename} does not exist.")
+    time.sleep(1)
+
+    fichier_choisi = fichier_choix()
+    process_file(fichier_choisi)
+
+    afficher_tableau(fichier_choisi)
+
