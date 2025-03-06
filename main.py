@@ -37,6 +37,13 @@ def fichier_choix():
 def afficher_tableau(fichier_choisi):
     alphabet = "abcdefghijklmnopqrstuvxyz"
     headers = []
+    epsilon = False
+    last_column = 0
+    sorted_output = "Automate/sorted_output.txt"
+    with open(sorted_output) as test_epsi, open(fichier_choisi,"r") as fc:
+        for i in range(0,int(fc.readlines()[4])):
+            if test_epsi.readline().split()[1] == "ep":
+                epsilon = True
 
     #création du header en utilisant la première ligne de l'automate
     headers.extend(["E/S","E"])
@@ -45,12 +52,14 @@ def afficher_tableau(fichier_choisi):
         print(nb_symbole)
         for i in range(0,int(nb_symbole)):
             headers.append(alphabet[i])
-
+    if epsilon == True:
+        headers.append("ep")
+    last_column = len(headers) - 1
     data = [[]]
     i = 0
-    with open("Automate/sorted_output.txt","r") as sort:
+    with open(sorted_output,"r") as sort:
         all_line = sort.readlines()
-    with open("Automate/sorted_output.txt","r") as so, open(fichier_choisi,"r") as fc:
+    with open(sorted_output,"r") as so, open(fichier_choisi,"r") as fc:
         lines = fc.readlines()
         first_time = True
         nb_etat = lines[1]
@@ -58,20 +67,27 @@ def afficher_tableau(fichier_choisi):
         etat_initiaux = lines[2][:0] + lines[2][0 + 1:]
         etat_finaux = lines[3][:0] + lines[3][0 + 1:]
         nb_transition = lines[4]
-        print("etat_finaux :", etat_finaux)
-        print("etat_initiaux :", etat_initiaux)
         line = so.readline()
-        print(nb_etat)
-        print(nb_symbole)
-        for i in range(0,int(nb_etat)):
-            temp = []
-            for j in range(0,int(nb_symbole)+2):
-                temp.append(" ")
-            if first_time == True:
-                data[0] = temp
-                first_time = False
-            else:
-                data.append(temp)
+        if epsilon == True:
+            for i in range(0,int(nb_etat)):
+                temp = []
+                for j in range(0,int(nb_symbole)+3):
+                    temp.append(" ")
+                if first_time == True:
+                    data[0] = temp
+                    first_time = False
+                else:
+                    data.append(temp)
+        else:
+            for i in range(0,int(nb_etat)):
+                temp = []
+                for j in range(0,int(nb_symbole)+2):
+                    temp.append(" ")
+                if first_time == True:
+                    data[0] = temp
+                    first_time = False
+                else:
+                    data.append(temp)
         for w in range(0,int(nb_etat)):
             if str(w) in etat_initiaux and str(w) in etat_finaux:
                 data[w][0] = "E/S"
@@ -87,13 +103,21 @@ def afficher_tableau(fichier_choisi):
                 data[w][1] = str(w)
 
 
-
         for z in range(0,int(nb_transition)):
+            end = False
             print("z = ",z)
             splitline = line.split()
-            data[int(splitline[0])][alphabet.find(splitline[1])+2] += splitline[2]
-            temp_ajout = all_line[z+1].split()
-            if temp_ajout[] == 
+            if splitline[1] == "ep":
+                data[int(splitline[0])][last_column] += splitline[2]
+            else:
+                data[int(splitline[0])][alphabet.find(splitline[1])+2] += splitline[2]
+            if z != int(nb_transition)-1:
+                temp_ajout = all_line[z+1].split()
+                end = True
+            if temp_ajout[0] == splitline[0] and temp_ajout[1] == splitline[1] and end == True and epsilon == False:
+                data[int(splitline[0])][alphabet.find(splitline[1])+2] += ","
+            elif temp_ajout[0] == splitline[0] and temp_ajout[1] == splitline[1] and end == True and epsilon == True:
+                data[int(splitline[0])][last_column] += ","
             line = so.readline()
             
 
@@ -125,6 +149,20 @@ def afficher_tableau(fichier_choisi):
     
     # Lancer l'interface
     root.mainloop()
+
+def supprimer_lignes_vides(nom_fichier):
+    # Ouvrir le fichier en mode lecture
+    with open(nom_fichier, 'r', encoding='utf-8') as fichier:
+        # Lire toutes les lignes du fichier
+        lignes = fichier.readlines()
+
+    # Filtrer les lignes non vides
+    lignes_non_vides = [ligne for ligne in lignes if ligne.strip()]
+
+    # Ouvrir le fichier en mode écriture pour écraser le contenu
+    with open(nom_fichier, 'w', encoding='utf-8') as fichier:
+        # Écrire les lignes non vides dans le fichier
+        fichier.writelines(lignes_non_vides)
 
 def process_file(input_file):
     """
@@ -176,6 +214,6 @@ if __name__ == "__main__":
 
     fichier_choisi = fichier_choix()
     process_file(fichier_choisi)
-
+    supprimer_lignes_vides("Automate/sorted_output.txt")
     afficher_tableau(fichier_choisi)
 
