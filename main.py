@@ -34,8 +34,6 @@ def fichier_choix():
 
     return(fichier_chemin)
 
-
-
 def afficher_tableau(fichier_choisi):
     alphabet = "abcdefghijklmnopqrstuvxyz"
     headers = []
@@ -57,30 +55,31 @@ def afficher_tableau(fichier_choisi):
         nb_etat = lines[0]
         etat_initiaux = lines[2][:0] + lines[2][0 + 1:]
         etat_finaux = lines[3][:0] + lines[3][0 + 1:]
+        nb_transition = lines[4]
         print("etat_finaux :", etat_finaux)
         print("etat_initiaux :", etat_initiaux)
         line = so.readline()
         print(line)
-        while(line in all_line):
+        for j in range(0,int(nb_transition)-1):
             executer = False
             temp = []
-            for i in range(0,int(nb_etat)):
-                splitline = line.split()
-                if splitline[0] in etat_initiaux and splitline[0] in etat_finaux and executer == False:
-                    temp.extend(["E/S",splitline[0]])
-                    executer = True
-                elif splitline[0] in etat_initiaux and splitline[0] not in etat_finaux and executer == False:
-                    temp.extend(["E",splitline[0]])
-                    executer = True
-                elif splitline[0] not in etat_initiaux and splitline[0] in etat_finaux and executer == False:
-                    temp.extend(["S",splitline[0]])
-                    executer = True
-                elif splitline[0] not in etat_initiaux and splitline[0] not in etat_finaux and executer == False:
-                    temp.extend(["--",splitline[0]])
-                    executer = True
-                temp.append(splitline[2])
-                line = so.readline()
+            
+            if splitline[0] in etat_initiaux and splitline[0] in etat_finaux and executer == False:
+                temp.extend(["E/S",splitline[0]])
+                executer = True
+            elif splitline[0] in etat_initiaux and splitline[0] not in etat_finaux and executer == False:
+                temp.extend(["E",splitline[0]])
+                executer = True
+            elif splitline[0] not in etat_initiaux and splitline[0] in etat_finaux and executer == False:
+                temp.extend(["S",splitline[0]])
+                executer = True
+            elif splitline[0] not in etat_initiaux and splitline[0] not in etat_finaux and executer == False:
+                temp.extend(["--",splitline[0]])
+                executer = True
+            temp.append(splitline[2])
+            line = so.readline()
             data.append(temp)
+            
 
 
     
