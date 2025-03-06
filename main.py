@@ -52,33 +52,49 @@ def afficher_tableau(fichier_choisi):
         all_line = sort.readlines()
     with open("Automate/sorted_output.txt","r") as so, open(fichier_choisi,"r") as fc:
         lines = fc.readlines()
-        nb_etat = lines[0]
+        first_time = True
+        nb_etat = lines[1]
+        nb_symbole = lines[0]
         etat_initiaux = lines[2][:0] + lines[2][0 + 1:]
         etat_finaux = lines[3][:0] + lines[3][0 + 1:]
         nb_transition = lines[4]
         print("etat_finaux :", etat_finaux)
         print("etat_initiaux :", etat_initiaux)
         line = so.readline()
-        print(line)
-        for j in range(0,int(nb_transition)-1):
-            executer = False
+        print(nb_etat)
+        print(nb_symbole)
+        for i in range(0,int(nb_etat)):
             temp = []
-            
-            if splitline[0] in etat_initiaux and splitline[0] in etat_finaux and executer == False:
-                temp.extend(["E/S",splitline[0]])
-                executer = True
-            elif splitline[0] in etat_initiaux and splitline[0] not in etat_finaux and executer == False:
-                temp.extend(["E",splitline[0]])
-                executer = True
-            elif splitline[0] not in etat_initiaux and splitline[0] in etat_finaux and executer == False:
-                temp.extend(["S",splitline[0]])
-                executer = True
-            elif splitline[0] not in etat_initiaux and splitline[0] not in etat_finaux and executer == False:
-                temp.extend(["--",splitline[0]])
-                executer = True
-            temp.append(splitline[2])
+            for j in range(0,int(nb_symbole)+2):
+                temp.append(" ")
+            if first_time == True:
+                data[0] = temp
+                first_time = False
+            else:
+                data.append(temp)
+        for w in range(0,int(nb_etat)):
+            if str(w) in etat_initiaux and str(w) in etat_finaux:
+                data[w][0] = "E/S"
+                data[w][1] = str(w)
+            elif str(w) in etat_initiaux and str(w) not in etat_finaux:
+                data[w][0] = "E"
+                data[w][1] = str(w)
+            elif str(w) not in etat_initiaux and str(w) in etat_finaux:
+                data[w][0] = "S"
+                data[w][1] = str(w)
+            elif str(w) not in etat_initiaux and str(w) not in etat_finaux:
+                data[w][0] = " "
+                data[w][1] = str(w)
+
+
+
+        for z in range(0,int(nb_transition)):
+            print("z = ",z)
+            splitline = line.split()
+            data[int(splitline[0])][alphabet.find(splitline[1])+2] += splitline[2]
+            temp_ajout = all_line[z+1].split()
+            if temp_ajout[] == 
             line = so.readline()
-            data.append(temp)
             
 
 
