@@ -119,6 +119,10 @@ def afficher_tableau(fichier_choisi):
             elif temp_ajout[0] == splitline[0] and temp_ajout[1] == splitline[1] and end == True and epsilon == True:
                 data[int(splitline[0])][last_column] += ","
             line = so.readline()
+        for i in range(0,int(nb_etat)):
+            for j in range(0,last_column+1):
+                if data[i][j] == " ":
+                    data[i][j] = "--"
             
 
 
