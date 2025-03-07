@@ -40,6 +40,8 @@ def afficher_tableau(fichier_choisi):
     epsilon = False
     last_column = 0
     sorted_output = "Automate/sorted_output.txt"
+
+    #test si l'automate contient le mot vide ep
     with open(sorted_output) as test_epsi, open(fichier_choisi,"r") as fc:
         for i in range(0,int(fc.readlines()[4])):
             if test_epsi.readline().split()[1] == "ep":
@@ -52,22 +54,31 @@ def afficher_tableau(fichier_choisi):
         print(nb_symbole)
         for i in range(0,int(nb_symbole)):
             headers.append(alphabet[i])
+    
+    #ajout d'une colonne en plus si l'automate contient ep
     if epsilon == True:
         headers.append("ep")
     last_column = len(headers) - 1
     data = [[]]
     i = 0
+
+    #lecture de toutes les lignes du fichier trier de l'automate
     with open(sorted_output,"r") as sort:
         all_line = sort.readlines()
     with open(sorted_output,"r") as so, open(fichier_choisi,"r") as fc:
         lines = fc.readlines()
         first_time = True
+
+        #On récupère tous les paramètres de l'automate
         nb_etat = lines[1]
         nb_symbole = lines[0]
         etat_initiaux = lines[2][:0] + lines[2][0 + 1:]
         etat_finaux = lines[3][:0] + lines[3][0 + 1:]
         nb_transition = lines[4]
+
         line = so.readline()
+
+        #Définition de la liste 2D si l'automate contient ep
         if epsilon == True:
             for i in range(0,int(nb_etat)):
                 temp = []
@@ -78,6 +89,8 @@ def afficher_tableau(fichier_choisi):
                     first_time = False
                 else:
                     data.append(temp)
+
+        #Définition de la liste 2D si l'automate ne contient pas ep
         else:
             for i in range(0,int(nb_etat)):
                 temp = []
@@ -88,6 +101,8 @@ def afficher_tableau(fichier_choisi):
                     first_time = False
                 else:
                     data.append(temp)
+
+        #Remplissage de la première colonne des états d'entrées/sorties
         for w in range(0,int(nb_etat)):
             if str(w) in etat_initiaux and str(w) in etat_finaux:
                 data[w][0] = "E/S"
@@ -102,7 +117,7 @@ def afficher_tableau(fichier_choisi):
                 data[w][0] = " "
                 data[w][1] = str(w)
 
-
+        #Remplissage de Data avec tous les états d'arrivées 
         for z in range(0,int(nb_transition)):
             end = False
             print("z = ",z)
@@ -119,17 +134,18 @@ def afficher_tableau(fichier_choisi):
             elif temp_ajout[0] == splitline[0] and temp_ajout[1] == splitline[1] and end == True and epsilon == True:
                 data[int(splitline[0])][last_column] += ","
             line = so.readline()
+            
+        #Remplissage de Data en changeant les état vide " " par "--" pour une meilleur compréhension du tableau
         for i in range(0,int(nb_etat)):
             for j in range(0,last_column+1):
                 if data[i][j] == " ":
                     data[i][j] = "--"
-            
 
 
     
     # Affichage du tableau dans le terminal avec bordures
     print(tabulate(data, headers, tablefmt="grid"))
-    
+
     # Création de la fenêtre
     root = tk.Tk()
     root.title("Tableau des Transitions")
@@ -153,6 +169,9 @@ def afficher_tableau(fichier_choisi):
     
     # Lancer l'interface
     root.mainloop()
+    
+    return data
+    
 
 def supprimer_lignes_vides(nom_fichier):
     # Ouvrir le fichier en mode lecture
