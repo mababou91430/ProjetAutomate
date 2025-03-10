@@ -128,10 +128,10 @@ def creation_tableau(fichier_choisi):
             if z != int(nb_transition)-1:
                 temp_ajout = all_line[z+1].split()
                 end = True
-            if temp_ajout[0] == splitline[0] and temp_ajout[1] == splitline[1] and end == True and epsilon == False:
-                data[int(splitline[0])][alphabet.find(splitline[1])+2] += ","
-            elif temp_ajout[0] == splitline[0] and temp_ajout[1] == splitline[1] and end == True and epsilon == True:
-                data[int(splitline[0])][last_column] += ","
+                if temp_ajout[0] == splitline[0] and temp_ajout[1] == splitline[1] and end == True and epsilon == False:
+                    data[int(splitline[0])][alphabet.find(splitline[1])+2] += ","
+                elif temp_ajout[0] == splitline[0] and temp_ajout[1] == splitline[1] and end == True and epsilon == True:
+                    data[int(splitline[0])][last_column] += ","
             line = so.readline()
             
         #Remplissage de Data en changeant les état vide " " par "--" pour une meilleur compréhension du tableau
