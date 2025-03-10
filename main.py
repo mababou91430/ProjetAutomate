@@ -120,7 +120,6 @@ def creation_tableau(fichier_choisi):
         #Remplissage de Data avec tous les états d'arrivées 
         for z in range(0,int(nb_transition)):
             end = False
-            print("z = ",z)
             splitline = line.split()
             if splitline[1] == "ep":
                 data[int(splitline[0])][last_column] += splitline[2]
@@ -159,7 +158,6 @@ def afficher(data,fichier_choisi):
     headers.extend(["E/S","E"])
     with open(fichier_choisi, "r") as paramètre:
         nb_symbole = paramètre.readline()
-        print(nb_symbole)
         for i in range(0,int(nb_symbole)):
             headers.append(alphabet[i])
 
@@ -245,7 +243,23 @@ def process_file(input_file):
         print("Erreur : Fichier non trouvé.")
     except Exception as e:
         print(f"Une erreur s'est produite : {e}")
-    
+
+def complementarisation(data,fichier_choisi):
+    nb_etat = 0
+    with open(fichier_choisi,"r") as f:
+        nb_etat = int(f.readlines()[1])
+
+    for i in range(0,nb_etat):
+        if data[i][0] == "E/S":
+            data[i][0] = "E"
+        elif data[i][0] == "S":
+            data[i][0] = "--"
+        elif data[i][0] == "--":
+            data[i][0] = "S"
+        elif data[i][0] == "E":
+            data[i][0] = "E/S"
+    return data
+
 
 if __name__ == "__main__":
     filename = "Automate/sorted_output.txt"
@@ -258,11 +272,13 @@ if __name__ == "__main__":
         print(f"{filename} does not exist.")
     time.sleep(1)
 
-    fichier_choisi = fichier_choix()
-    process_file(fichier_choisi)
-    supprimer_lignes_vides("Automate/sorted_output.txt")
-    data = creation_tableau(fichier_choisi)
-    afficher(data,fichier_choisi)
+    fichier_choisi = fichier_choix()#permet a l'utilisateur de choisir le fichier
+    process_file(fichier_choisi)#crée un fichier text qui contient toutes les transitions trier dans l'ordre croissant
+    supprimer_lignes_vides("Automate/sorted_output.txt")#supprime les lignes vides
+    data = creation_tableau(fichier_choisi)#crée un tableau de transition sous forme d'une liste2D pour permettre une manipulation plus simple des données
+    afficher(data,fichier_choisi)#affiche le tableau de donnée
+    complémentaire = complementarisation(data,fichier_choisi)
+    afficher(complémentaire,fichier_choisi)
 
 
     if os.path.exists(filename):
