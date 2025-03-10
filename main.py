@@ -11,7 +11,7 @@ def fichier_choix():
     i = 1
     choix = None
     for file in os.listdir(chemin_dossier):
-        print(str(i)+"."+file)
+        print(str(i)+". "+file)
         i+=1
 
     while True :
@@ -34,7 +34,7 @@ def fichier_choix():
 
     return(fichier_chemin)
 
-def afficher_tableau(fichier_choisi):
+def creation_tableau(fichier_choisi):
     alphabet = "abcdefghijklmnopqrstuvxyz"
     headers = []
     epsilon = False
@@ -140,9 +140,32 @@ def afficher_tableau(fichier_choisi):
             for j in range(0,last_column+1):
                 if data[i][j] == " ":
                     data[i][j] = "--"
+    return data
 
+def afficher(data,fichier_choisi):
 
-    
+    alphabet = "abcdefghijklmnopqrstuvxyz"
+    headers = []
+    epsilon = False
+    sorted_output = "Automate/sorted_output.txt"
+
+    #test si l'automate contient le mot vide ep
+    with open(sorted_output) as test_epsi, open(fichier_choisi,"r") as fc:
+        for i in range(0,int(fc.readlines()[4])):
+            if test_epsi.readline().split()[1] == "ep":
+                epsilon = True
+
+    #création du header en utilisant la première ligne de l'automate
+    headers.extend(["E/S","E"])
+    with open(fichier_choisi, "r") as paramètre:
+        nb_symbole = paramètre.readline()
+        print(nb_symbole)
+        for i in range(0,int(nb_symbole)):
+            headers.append(alphabet[i])
+
+    if epsilon == True:
+        headers.append("ep")
+
     # Affichage du tableau dans le terminal avec bordures
     print(tabulate(data, headers, tablefmt="grid"))
 
@@ -170,7 +193,7 @@ def afficher_tableau(fichier_choisi):
     # Lancer l'interface
     root.mainloop()
     
-    return data
+
     
 
 def supprimer_lignes_vides(nom_fichier):
@@ -238,5 +261,13 @@ if __name__ == "__main__":
     fichier_choisi = fichier_choix()
     process_file(fichier_choisi)
     supprimer_lignes_vides("Automate/sorted_output.txt")
-    afficher_tableau(fichier_choisi)
+    data = creation_tableau(fichier_choisi)
+    afficher(data,fichier_choisi)
 
+
+    if os.path.exists(filename):
+        os.remove(filename)  # supprime le fichier si il existe
+        print(f"{filename} has been deleted.")
+    else:
+        print(f"{filename} does not exist.")
+    time.sleep(1)
