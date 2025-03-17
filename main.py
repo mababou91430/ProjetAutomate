@@ -191,6 +191,40 @@ def afficher(data,fichier_choisi):
     # Lancer l'interface
     root.mainloop()
     
+def afficherDeter(data,fichier_choisi):
+    headers = []
+    alphabet = "abcdefghijklmnopqrstuvxyz"
+    headers.extend(["E/S","E"])
+    with open(fichier_choisi, "r") as paramètre:
+        nb_symbole = paramètre.readline()
+        for i in range(0,int(nb_symbole)):
+            headers.append(alphabet[i])
+
+    print(tabulate(data, headers, tablefmt="grid"))
+
+    # Création de la fenêtre
+    root = tk.Tk()
+    root.title("Tableau des Transitions")
+    
+    # Création du tableau
+    frame = ttk.Frame(root, padding=10)
+    frame.pack(fill=tk.BOTH, expand=True)
+    
+    tree = ttk.Treeview(frame, columns=headers, show='headings')
+    
+    # Configuration des colonnes
+    for col in headers:
+        tree.heading(col, text=col)
+        tree.column(col, anchor=tk.CENTER, width=80)
+    
+    # Ajout des données
+    for row in data:
+        tree.insert("", tk.END, values=row)
+    
+    tree.pack(fill=tk.BOTH, expand=True)
+    
+    # Lancer l'interface
+    root.mainloop()
 
     
 
@@ -260,6 +294,85 @@ def complementarisation(data,fichier_choisi):
             data[i][0] = "E/S"
     return data
 
+from collections import deque
+
+def determinisation(data, fichier_choisi):
+    """
+    Permet de transformer un automate non déterministe en un automate déterministe avec un tableau 2D en entrée.
+    Retourne un tableau 2D déterminisé, directement utilisable dans le programme.
+    """
+    
+    # Récupération des paramètres de l'automate depuis le fichier
+    with open(fichier_choisi, "r") as fichier:
+        lines = fichier.readlines()
+        nb_symbole = int(lines[0])  # Nombre de symboles de l'alphabet
+        nb_etat = int(lines[1])  # Nombre d'états
+    
+    # Construction de l'alphabet en fonction du nombre de symboles
+    alphabet = "abcdefghijklmnopqrstuvxyz"[:nb_symbole]
+
+    # Détection des états initiaux
+    etats_initiaux = set()
+    for ligne in data:
+        if ligne[0] in ["E", "E/S"]:
+            etats_initiaux.add(ligne[1])
+
+    # File pour parcourir les nouveaux états déterministes
+    queue = deque()
+    queue.append(",".join(sorted(etats_initiaux)))  # L'état initial est l'union des états initiaux
+
+    # Structure pour le nouvel automate déterminisé
+    nouveaux_etats = {}
+    transitions = {}
+
+    # Traitement de la déterminisation
+    while queue:
+        etat_actuel = queue.popleft()
+        etats_composants = etat_actuel.split(",")
+
+        # Initialisation des nouvelles transitions
+        transitions[etat_actuel] = {symbole: set() for symbole in alphabet}
+
+        for etat in etats_composants:
+            etat = int(etat)  # Convertir en entier pour indexer data
+            for i, symbole in enumerate(alphabet):
+                if data[etat][i + 2] != "--":
+                    transitions[etat_actuel][symbole].update(data[etat][i + 2].split(","))
+
+        # Ajout des nouveaux états détectés dans la file
+        for symbole in alphabet:
+            nouvel_etat = ",".join(sorted(transitions[etat_actuel][symbole]))
+            if nouvel_etat and nouvel_etat not in nouveaux_etats:
+                queue.append(nouvel_etat)
+                nouveaux_etats[nouvel_etat] = None
+
+    # Création du tableau 2D déterminisé
+    headers = ["E/S", "E"] + list(alphabet)
+    data_determinise = []
+
+    for etat in sorted(transitions.keys()):
+        ligne = ["--", etat] + ["--"] * len(alphabet)
+
+        # Définition des états initiaux et finaux
+        etats_composants = etat.split(",")
+        etat_initial = any(e in etats_initiaux for e in etats_composants)
+        etat_final = any(data[int(e)][0] in ["S", "E/S"] for e in etats_composants)
+
+        if etat_initial and etat_final:
+            ligne[0] = "E/S"
+        elif etat_initial:
+            ligne[0] = "E"
+        elif etat_final:
+            ligne[0] = "S"
+
+        # Remplissage des transitions
+        for i, symbole in enumerate(alphabet):
+            ligne[i + 2] = ",".join(sorted(transitions[etat][symbole])) if transitions[etat][symbole] else "--"
+
+        data_determinise.append(ligne)
+
+    return data_determinise
+
 
 if __name__ == "__main__":
     filename = "Automate/sorted_output.txt"
@@ -279,6 +392,8 @@ if __name__ == "__main__":
     afficher(data,fichier_choisi)#affiche le tableau de donnée
     complémentaire = complementarisation(data,fichier_choisi)
     afficher(complémentaire,fichier_choisi)
+    deter = determinisation(data,fichier_choisi)
+    afficherDeter(deter,fichier_choisi)
 
 
     if os.path.exists(filename):
