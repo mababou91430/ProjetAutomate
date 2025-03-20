@@ -294,21 +294,24 @@ def complementarisation(data,fichier_choisi):
             data[i][0] = "E/S"
     return data
 
+"""def est_standard(data, fichier_choisi):"""
+
+
 def est_determinise(data, fichier_choisi):
     """
     Vérifie si l'automate dont le tableau (data) est mis en paramètre est déterminisé
     Retourne True si il est déterminisé et False si ce n'est pas le cas 
     """
     nb_entres = 0
-    for i in range (1, len(data)):
+    for i in range (0, len(data)):
         if data[i][0]=="E" or data[i][0]=="E/S":
             nb_entres += 1 
     if nb_entres > 1 :
         return False
     liste_entres = []
-    for i in range (1, len(data)):
+    for i in range (0, len(data)):
         liste_entres.append(data[i][1])
-    for i in range (1, len(data)):
+    for i in range (0, len(data)):
         for j in data[i][2:]:
             if j not in liste_entres and j!="--":
                 return False
@@ -321,7 +324,7 @@ def est_determinise_et_complet (data, fichier_choisi):
     """
     if not est_determinise(data,fichier_choisi):
         return False 
-    for i in range (1, len(data)):
+    for i in range (0, len(data)):
         for j in data [i][2:]:
             if j=='--':
                 return False
@@ -338,7 +341,7 @@ def completer (data, fichier_choisi):
         return new_data
     elif not est_determinise(new_data,fichier_choisi):
         new_data = determinisation(new_data,fichier_choisi)
-    for i in range (1, len(new_data)):
+    for i in range (0, len(new_data)):
         for j in range (2, len(new_data[i])):
             if new_data[i][j]=="--":
                 new_data[i][j]="P"
@@ -458,11 +461,12 @@ if __name__ == "__main__":
 
 
 """test"""
-M = [[],['E','0','0','1'],['S','1','0','1']]
-L = [[],['E','0','0',"--"],['S','1','0','1']]
+M = [['E','0','0','1'],['S','1','0','1']]
+L = [['E','0','0',"--"],["--",'1','0','1']]
 print(est_determinise_et_complet(M,'smt'))
 print(est_determinise(L,'smt'))
 print(est_determinise_et_complet(L,'smt'))
 P = completer(L,'smt')
+print(L)
 print(P)
 print(est_determinise_et_complet(P,'smt'))
