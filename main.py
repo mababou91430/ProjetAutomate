@@ -294,6 +294,57 @@ def complementarisation(data,fichier_choisi):
             data[i][0] = "E/S"
     return data
 
+def est_determinise(data, fichier_choisi):
+    """
+    Vérifie si l'automate dont le tableau (data) est mis en paramètre est déterminisé
+    Retourne True si il est déterminisé et False si ce n'est pas le cas 
+    """
+    nb_entres = 0
+    for i in range (1, len(data)):
+        if data[i][0]=="E" or data[i][0]=="E/S":
+            nb_entres += 1 
+    if nb_entres > 1 :
+        return False
+    liste_entres = []
+    for i in range (1, len(data)):
+        liste_entres.append(data[i][1])
+    for i in range (1, len(data)):
+        for j in data[i][2:]:
+            if j not in liste_entres and j!="--":
+                return False
+    return True
+
+def est_determinise_et_complet (data, fichier_choisi):
+    """
+    Vérifie si l'automate dont le tableau (data) est mis en paramètre est complet (et détermisé) 
+    Retourne True si il est complet (et déterminisé) et False si ce n'est pas le cas 
+    """
+    if not est_determinise(data,fichier_choisi):
+        return False 
+    for i in range (1, len(data)):
+        for j in data [i][2:]:
+            if j=='--':
+                return False
+    return True
+
+def completer (data, fichier_choisi):
+    """
+    Prend en paramètre un automate sous forme d'un tableau
+    Vérifie si l'automate est déterminisé (si non déterminise) puis rends complet l'automate
+    Retourne un tableau 2D de l'automate complet, directement utilisable dans le programme.
+    """
+    new_data = data
+    if est_determinise_et_complet (new_data, fichier_choisi) :
+        return new_data
+    elif not est_determinise(new_data,fichier_choisi):
+        new_data = determinisation(new_data,fichier_choisi)
+    for i in range (1, len(new_data)):
+        for j in range (2, len(new_data[i])):
+            if new_data[i][j]=="--":
+                new_data[i][j]="P"
+    new_data.append(["--"] + ["P"] * (len(new_data[1])-1))
+    return new_data
+
 from collections import deque
 
 def determinisation(data, fichier_choisi):
@@ -402,3 +453,14 @@ if __name__ == "__main__":
     else:
         print(f"{filename} does not exist.")
     time.sleep(1)
+
+
+"""test"""
+M = [[],['E','0','0','1'],['S','1','0','1']]
+L = [[],['E','0','0',"--"],['S','1','0','1']]
+print(est_determinise_et_complet(M,'smt'))
+print(est_determinise(L,'smt'))
+print(est_determinise_et_complet(L,'smt'))
+P = completer(L,'smt')
+print(P)
+print(est_determinise_et_complet(P,'smt'))
