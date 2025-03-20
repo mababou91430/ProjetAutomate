@@ -445,7 +445,9 @@ if __name__ == "__main__":
     afficher(complémentaire,fichier_choisi)
     deter = determinisation(data,fichier_choisi)
     afficherDeter(deter,fichier_choisi)
-
+    P = completer(data,fichier_choisi)
+    print(est_determinise(P,fichier_choisi))
+    afficher(P,fichier_choisi)
 
     if os.path.exists(filename):
         os.remove(filename)  # supprime le fichier si il existe
