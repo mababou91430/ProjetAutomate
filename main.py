@@ -294,7 +294,50 @@ def complementarisation(data,fichier_choisi):
             data[i][0] = "E/S"
     return data
 
-"""def est_standard(data, fichier_choisi):"""
+def est_standard(data, fichier_choisi):
+    """
+    Vérifie si l'automate dont le tableau (data) est mis en paramètre est standardisé
+    Retourne True si il est standadisé et False si ce n'est pas le cas 
+    """
+    entre = None
+    nb_entres = 0
+    for i in range (0, len(data)):
+        if data[i][0]=="E" or data[i][0]=="E/S":
+            entre = data[i][1]
+            nb_entres += 1 
+    if nb_entres > 1 :
+        return False
+    for i in range (0, len(data)):
+        for j in data[i][2:]:
+            if j == entre:
+                return False
+    return True 
+
+def standardisation(data,fichier_choisi):
+    """
+    Prend en paramètre un automate sous forme d'un tableau
+    Vérifie si l'automate est déjà standard, si non : standardise
+    Retourne un tableau 2D de l'automate standard, directement utilisable dans le programme.
+    """
+    if est_standard(data, fichier_choisi):
+        return data
+    list_entres = []
+    for i in range (0, len(data)):
+        if data[i][0]=="E":
+            list_entres.append(i)
+            data[i][0]="--"
+        elif data[i][0]=="E/S":
+            list_entres.append(i)
+            data[i][0]="S"
+    nouv_ligne = ["E","i"] + ["--"] * (len(data[0])-2)
+    for i in list_entres:
+        for j in range (2,len(data[i])):
+            if nouv_ligne[j]=="--":
+                nouv_ligne[j]=data[i][j]
+            elif data[i][j] not in nouv_ligne[j].split():
+                nouv_ligne[j]+=','+ data[i][j]
+    data.append(nouv_ligne)
+    return data
 
 
 def est_determinise(data, fichier_choisi):
@@ -308,12 +351,12 @@ def est_determinise(data, fichier_choisi):
             nb_entres += 1 
     if nb_entres > 1 :
         return False
-    liste_entres = []
+    liste_etats = []
     for i in range (0, len(data)):
-        liste_entres.append(data[i][1])
+        liste_etats.append(data[i][1])
     for i in range (0, len(data)):
         for j in data[i][2:]:
-            if j not in liste_entres and j!="--":
+            if j not in liste_etats and j!="--":
                 return False
     return True
 
@@ -333,7 +376,7 @@ def est_determinise_et_complet (data, fichier_choisi):
 def completer (data, fichier_choisi):
     """
     Prend en paramètre un automate sous forme d'un tableau
-    Vérifie si l'automate est déterminisé (si non déterminise) puis rends complet l'automate
+    Vérifie si l'automate est déterminisé (si non : déterminise) puis rends complet l'automate
     Retourne un tableau 2D de l'automate complet, directement utilisable dans le programme.
     """
     new_data = data
@@ -345,7 +388,7 @@ def completer (data, fichier_choisi):
         for j in range (2, len(new_data[i])):
             if new_data[i][j]=="--":
                 new_data[i][j]="P"
-    new_data.append(["--"] + ["P"] * (len(new_data[1])-1))
+    new_data.append(["--"] + ["P"] * (len(new_data[0])-1))
     return new_data
 
 from collections import deque
@@ -460,11 +503,17 @@ if __name__ == "__main__":
 
 """test"""
 M = [['E','0','0','1'],['S','1','0','1']]
-L = [['E','0','0',"--"],["--",'1','0','1']]
+L = [['E','0','1',"--"],["--",'1','--','1']]
+O = [['E','0','0','1'],['E/S','1','1','1']]
 print(est_determinise_et_complet(M,'smt'))
 print(est_determinise(L,'smt'))
 print(est_determinise_et_complet(L,'smt'))
 P = completer(L,'smt')
-print(L)
 print(P)
 print(est_determinise_et_complet(P,'smt'))
+print(est_standard(M,'smh'))
+print(est_standard(L,'smh'))
+N = standardisation(M, 'smh')
+print(N)
+Q = standardisation(O, 'smh')
+print (Q)
