@@ -470,6 +470,183 @@ def determinisation(data, fichier_choisi):
 
     return data_determinise
 
+def minimisation(data, fichier_choisi):
+    """
+    Prend en parametre un automate sous la forme d'une liste 2D et le nom d'un fichier
+    Retourne un automate minimisé utilisable dans le reste du programme
+    """
+    # Verification de la determinisation et completion avant de minimiser
+    if not est_determinise_et_complet(data,fichier_choisi):
+        data=completer(data,fichier_choisi)
+    T=[]
+    NT=[]
+    # Separation en deux liste : etats terminaux et non terminaux
+    for i in range (len(data)):
+        if data[i][0]=="S" or data[i][0]=="E/S":
+            T.append(i)
+        else:
+            NT.append(i)
+    # Minimisation de cas particuliers : terminaux ou non terminaux vides
+    if T==[]:
+        return [["E","0"]+["0"]*(len(data[0])-2)]
+    elif NT==[]:
+        return [["E/S","0"]+["0"]*(len(data[0])-2)]
+    M=[T,NT]
+    count = 0 # nombre de boucle effectuer sans avoir à séparer les états (si = à la taille de M, c'est que tous les groupes d'états sont indivisibles)
+    # determination du θfinal
+    while count!=len(M) and not a_un_element(M): 
+        taille_M= len(M)
+        # on prend le premier element de M
+        T=M.pop(0)
+        separe=False
+        # cas particulier : T n'as qu'un element : pas de separation possible
+        if len(T)==1:
+            M.append(T)
+            separe=True
+        # Separation des etats de T afin qu'il soient inséparable à la fin de l'étape
+        while not separe:
+            temp = []
+            for j in range(2, len(data[0])): # Pour tous les éléments de l'alphabet
+                viens_de = None
+                a = -1
+                for i in range (len (T)): #Pour tous les elements de T
+                    a+=1
+                    etat= index_etat_transition (data, T[a], j)
+                    # verifie si tous les etat pointent vers le meme groupe pour la jieme lettre 
+                    # Reste dans le groupe T tous ceux qui pointent vers le même que le 1er
+                    # Sont déplacés vers temp tous ceux qui ne pointent pas vers le même etat que le 1er 
+                    if is_in(T,etat):
+                        if viens_de == None: 
+                            viens_de="T"
+                        elif viens_de!="T":
+                            temp.append(T.pop(a))
+                            a-=1
+                    else:
+                        for b in range (len(M)):
+                            if is_in(M[b],etat):
+                                if viens_de==None:
+                                    viens_de="M"+str(b)
+                                elif viens_de!="M"+str(b):
+                                    temp.append(T.pop(a))
+                                    a-=1
+            # Verifier l'etat de temp : 
+            # si il est vide -> T est inséparable, on passe au prochain element de M et on rajoute T à la fin de M
+            # sinon -> T viens d'être divisé en deux groupes : T est maintenant inséparable, on le rajoute dans M + temp peut etre divisible : il faut recommencé le même prossecus 
+            if temp==[]:
+                separe=True
+                M.append(T)
+            else : 
+                M.append(T)
+                T=temp
+        # Si on a pas toucher à le taille de M au cours du processus : T était déjà inséparable, on rajoute un au nombre des groupes inséparables trouver de suite (count)
+        # Sinon on remet le compteur à 0 : on a eu 0 T indivisible sans division d'affiler
+        if taille_M==len(M):
+            count+=1
+        else :
+            count = 0
+    # Construction de l'automate equivalent 
+    liste_supression =[] # liste des indices des lignes à suprimer 
+    # Pour tous les groupes d'états indivisibles il faut créer une nouvelle ligne 
+    for T in M :
+        if len(T)>1 : # Si il n'y a qu'un seul état dans le groupe il n'est pas utile de le modifier
+            E_S = '--'
+            transition=[] # tableau 2D de l'ensemble des transitions du groupe T
+            for i in range(len(data[0])-2):
+                transition.append([])
+            # ajout des données de chaques etat du groupe dans l'etat final du groupe
+            for i in T : 
+                liste_supression.append(i)
+                # determination de la fonction d'entrée et/ou sortie du nouvel etat
+                if data[i][0]=="E/S":
+                    E_S = "E/S"
+                elif data [i][0]=="S":
+                    if E_S == "--":
+                        E_S = "S"
+                    elif E_S == "E":
+                        E_S = "E/S"
+                elif data[i][0]=="E":
+                    if E_S == "--":
+                        E_S = "E"
+                    elif E_S == "S":
+                        E_S = "E/S"
+                # remplissage de la liste 2D des transitions 
+                for j in range (2, len(data[0])):
+                    if data[i][j] not in transition[j-2]:
+                        transition[j-2].append(data[i][j])
+            # Construction du nom du nouvel etat
+            etat =[]
+            T =sorted(T) # Pour que les états soient bien dans l'ordre croissants
+            T_str = []
+            for a in T:
+                T_str.append(data[a][1])
+            etat = ",".join(T_str)
+            # Construction de la nouvelle ligne
+            newline=[E_S,etat]
+            for i in transition:
+                newline.append(",".join(sorted(i)))
+            # Ajout de la nouvelle ligne dans le tableau de l'automate
+            data.append(newline)
+    # modification du nom des états dans les transitions 
+    for T in M:
+        if len(T)>1: # Pour tous les états du groupements ayant plus d'un élément
+            for i in range (len(data)):
+                for j in range (2, len(data[0])): 
+                    tmp_etat=index_etat_transition(data, i, j)
+                    # On remplace le nom d'un état qui fait partit d'un regroupement par celui de son regroupement 
+                    if tmp_etat in T :
+                        T_str =[]
+                        T =sorted(T)
+                        for a in T:
+                            T_str.append(data[a][1])
+                        data[i][j]= ",".join(T_str)
+    # Supression des lignes des états qui font partis d'un regroupement d'état
+    liste_supression = sorted(liste_supression, reverse=True) # On range les indices des états à suprimer par ordre décroissants 
+    for i in liste_supression:
+        data.pop(i)
+    return data 
+
+
+# fonction utiliser pour la minimisation
+def index_etat_transition (data, i, j):
+    """
+    Prend en parametre la l'automate sous forme de liste 2D ainsi que les coordonnes vers une transition de l'automate
+    retourne l'indice (la ligne) ou ce trouve l'etat pointé dans la transition
+    """
+    found = False
+    a = 0
+    while not found:
+        if data[a][1]==data[i][j]:
+            etat = a
+            found = True
+        a+= 1
+    return etat 
+
+                       
+
+# fonction utiliser dans la minimisation 
+def a_un_element (L):
+    '''
+    Prend en parametre une liste 2D
+    Retourne un booleen : True si chaque liste de la liste 2D n'as qu'un element, False sinon
+    '''
+    somme = 0
+    for i in L :
+        somme +=len(i)
+    return (somme == len(L))
+
+
+
+#fonction utiliser dans la minimisation
+def is_in(L, val):
+    '''
+    Prend en parametre une liste simple
+    Retourne un booleen : True si val est un element de la liste, False sinon
+    '''
+    for i in L:
+        if i == val:
+            return True
+    return False
+
 
 if __name__ == "__main__":
     filename = "Automate/sorted_output.txt"
@@ -519,3 +696,5 @@ N = standardisation(M, 'smh')
 print(N)
 Q = standardisation(O, 'smh')
 print (Q)
+R = [["E/S",'0','1','2'],['S','1','0','2'],['S','2','3','4'],['--','3','4','0'],['--','4','3','1']]
+print (minimisation(R,'smh'))
