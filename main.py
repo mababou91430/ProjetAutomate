@@ -1,8 +1,10 @@
 import tkinter as tk
 import os
+import copy
 import time
 from tkinter import ttk
 from tabulate import tabulate
+
 
 
 def fichier_choix():
@@ -279,20 +281,19 @@ def process_file(input_file):
         print(f"Une erreur s'est produite : {e}")
 
 def complementarisation(data,fichier_choisi):
-    nb_etat = 0
+    copie_data = copy.deepcopy(data)
     with open(fichier_choisi,"r") as f:
         nb_etat = int(f.readlines()[1])
-
     for i in range(0,nb_etat):
-        if data[i][0] == "E/S":
-            data[i][0] = "E"
-        elif data[i][0] == "S":
-            data[i][0] = "--"
-        elif data[i][0] == "--":
-            data[i][0] = "S"
-        elif data[i][0] == "E":
-            data[i][0] = "E/S"
-    return data
+        if copie_data[i][0] == "E/S":
+            copie_data[i][0] = "E"
+        elif copie_data[i][0] == "S":
+            copie_data[i][0] = "--"
+        elif copie_data[i][0] == "--":
+            copie_data[i][0] = "S"
+        elif copie_data[i][0] == "E":
+            copie_data[i][0] = "E/S"
+    return copie_data
 
 def est_standard(data, fichier_choisi):
     """
@@ -614,6 +615,7 @@ def index_etat_transition (data, i, j):
     """
     found = False
     a = 0
+
     while not found:
         if data[a][1]==data[i][j]:
             etat = a
@@ -650,28 +652,39 @@ def is_in(L, val):
 def output_txt(data,fichier_choisi,EPS):
     headers = []
     alphabet = "abcdefghijklmnopqrstuvwxyz"
+
+    copie_data = copy.deepcopy(data)
     print("test : " +fichier_choisi)
-    new_fichier_chois = fichier_choisi.replace("Automate","Automate_output")
-    print("test : " +fichier_choisi)
+    index = fichier_choisi.rfind("Automate")
+    new_fichier_chois = fichier_choisi[:index] + "Automate_output" + fichier_choisi[index + len("Automate"):]
+    print("test : " +new_fichier_chois)
     headers.extend(["E/S","E"])
     with open(fichier_choisi, "r") as paramètre:
         nb_symbole = paramètre.readline()
         for i in range(0,int(nb_symbole)):
             headers.append(alphabet[i])
-    data.insert(0,headers)
+    copie_data.insert(0,headers)
 
-    largeurs_colonnes = [max(len(str(element)) for element in colonne) for colonne in zip(*data)]
+    largeurs_colonnes = [max(len(str(element)) for element in colonne) for colonne in zip(*copie_data)]
 
-    # Ouvrir un fichier en mode écriture
-    with open(new_fichier_chois+'_output', 'w', encoding='utf-8') as fichier:
-        for ligne in data:
-            # Formater chaque élément pour qu'il occupe la largeur maximale de sa colonne
-            ligne_formatee = ' '.join(str(element).rjust(largeur) for element, largeur in zip(ligne, largeurs_colonnes))
-            # Écrire la ligne formatée dans le fichier
-            fichier.write(ligne_formatee + '\n')
-
-
-
+    # Ouvrir un fichier en mode écriture et tester si le fichier a déja été créée 
+    if os.path.exists(new_fichier_chois):
+        #print("Test fichier exist : 0")
+        with open(new_fichier_chois, 'a', encoding='utf-8') as fichier:
+            fichier.write('\n-------------------------\n\n')
+            for ligne in copie_data:
+                # Formater chaque élément pour qu'il occupe la largeur maximale de sa colonne
+                ligne_formatee = ' '.join(str(element).rjust(largeur) for element, largeur in zip(ligne, largeurs_colonnes))
+                # Écrire la ligne formatée dans le fichier
+                fichier.write(ligne_formatee + '\n')
+    else:
+        with open(new_fichier_chois, 'w', encoding='utf-8') as fichier:
+            for ligne in copie_data:
+                # Formater chaque élément pour qu'il occupe la largeur maximale de sa colonne
+                ligne_formatee = ' '.join(str(element).rjust(largeur) for element, largeur in zip(ligne, largeurs_colonnes))
+                # Écrire la ligne formatée dans le fichier
+                fichier.write(ligne_formatee + '\n')
+    
 
 if __name__ == "__main__":
     filename = "Automate/sorted_output.txt"
@@ -684,18 +697,26 @@ if __name__ == "__main__":
         print(f"{filename} does not exist.")
     time.sleep(1)
 
-    fichier_choisi = fichier_choix()#permet a l'utilisateur de choisir le fichier
-    process_file(fichier_choisi)#crée un fichier text qui contient toutes les transitions trier dans l'ordre croissant
-    supprimer_lignes_vides("Automate/sorted_output.txt")#supprime les lignes vides
-    data = creation_tableau(fichier_choisi)
-    comple = complementarisation(data,fichier_choisi)
-    #afficher(data,fichier_choisi)
-    output_txt(data,fichier_choisi,0)
-
-    if os.path.exists(filename):
-        os.remove(filename)  # supprime le fichier si il existe
-        print(f"{filename} has been deleted.")
-    else:
-        print(f"{filename} does not exist.")
-    time.sleep(1)
+    dossier = "C:\\Users\\mathm\\Documents\\efrei\\pp2\\automate\\ProjetAutomate\\Automate"
+    for nom_fichier in os.listdir(dossier):
+        fichier_choisi = os.path.join(dossier, nom_fichier)
+        process_file(fichier_choisi)#crée un fichier text qui contient toutes les transitions trier dans l'ordre croissant
+        supprimer_lignes_vides("Automate/sorted_output.txt")#supprime les lignes vides
+        data = creation_tableau(fichier_choisi)
+        comple = complementarisation(data,fichier_choisi)
+        deter = determinisation(data,fichier_choisi)
+        minim = minimisation(data,fichier_choisi)
+        standar = standardisation(data,fichier_choisi)
+        #afficher(data,fichier_choisi)
+        output_txt(data,fichier_choisi,0)
+        #afficher(comple,fichier_choisi)
+        output_txt(comple,fichier_choisi,0)
+        output_txt(deter,fichier_choisi,0)
+        output_txt(minim,fichier_choisi,0)
+        output_txt(standar,fichier_choisi,0)
+        if os.path.exists(filename):
+            os.remove(filename)  # supprime le fichier si il existe
+            print(f"{filename} has been deleted.")
+        else:
+            print(f"{filename} does not exist.")
 
