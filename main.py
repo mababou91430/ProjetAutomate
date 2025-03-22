@@ -647,6 +647,31 @@ def is_in(L, val):
             return True
     return False
 
+def output_txt(data,fichier_choisi,EPS):
+    headers = []
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
+    print("test : " +fichier_choisi)
+    new_fichier_chois = fichier_choisi.replace("Automate","Automate_output")
+    print("test : " +fichier_choisi)
+    headers.extend(["E/S","E"])
+    with open(fichier_choisi, "r") as paramètre:
+        nb_symbole = paramètre.readline()
+        for i in range(0,int(nb_symbole)):
+            headers.append(alphabet[i])
+    data.insert(0,headers)
+
+    largeurs_colonnes = [max(len(str(element)) for element in colonne) for colonne in zip(*data)]
+
+    # Ouvrir un fichier en mode écriture
+    with open(new_fichier_chois+'_output', 'w', encoding='utf-8') as fichier:
+        for ligne in data:
+            # Formater chaque élément pour qu'il occupe la largeur maximale de sa colonne
+            ligne_formatee = ' '.join(str(element).rjust(largeur) for element, largeur in zip(ligne, largeurs_colonnes))
+            # Écrire la ligne formatée dans le fichier
+            fichier.write(ligne_formatee + '\n')
+
+
+
 
 if __name__ == "__main__":
     filename = "Automate/sorted_output.txt"
@@ -662,15 +687,10 @@ if __name__ == "__main__":
     fichier_choisi = fichier_choix()#permet a l'utilisateur de choisir le fichier
     process_file(fichier_choisi)#crée un fichier text qui contient toutes les transitions trier dans l'ordre croissant
     supprimer_lignes_vides("Automate/sorted_output.txt")#supprime les lignes vides
-    data = creation_tableau(fichier_choisi)#crée un tableau de transition sous forme d'une liste2D pour permettre une manipulation plus simple des données
-    afficher(data,fichier_choisi)#affiche le tableau de donnée
-    complémentaire = complementarisation(data,fichier_choisi)
-    afficher(complémentaire,fichier_choisi)
-    deter = determinisation(data,fichier_choisi)
-    afficherDeter(deter,fichier_choisi)
-    P = completer(data,fichier_choisi)
-    print(est_determinise(P,fichier_choisi))
-    afficher(P,fichier_choisi)
+    data = creation_tableau(fichier_choisi)
+    comple = complementarisation(data,fichier_choisi)
+    #afficher(data,fichier_choisi)
+    output_txt(data,fichier_choisi,0)
 
     if os.path.exists(filename):
         os.remove(filename)  # supprime le fichier si il existe
@@ -679,22 +699,3 @@ if __name__ == "__main__":
         print(f"{filename} does not exist.")
     time.sleep(1)
 
-
-"""test"""
-M = [['E','0','0','1'],['S','1','0','1']]
-L = [['E','0','1',"--"],["--",'1','--','1']]
-O = [['E','0','0','1'],['E/S','1','1','1']]
-print(est_determinise_et_complet(M,'smt'))
-print(est_determinise(L,'smt'))
-print(est_determinise_et_complet(L,'smt'))
-P = completer(L,'smt')
-print(P)
-print(est_determinise_et_complet(P,'smt'))
-print(est_standard(M,'smh'))
-print(est_standard(L,'smh'))
-N = standardisation(M, 'smh')
-print(N)
-Q = standardisation(O, 'smh')
-print (Q)
-R = [["E/S",'0','1','2'],['S','1','0','2'],['S','2','3','4'],['--','3','4','0'],['--','4','3','1']]
-print (minimisation(R,'smh'))
