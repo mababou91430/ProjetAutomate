@@ -697,7 +697,7 @@ if __name__ == "__main__":
         print(f"{filename} does not exist.")
     time.sleep(1)
 
-    dossier = "C:\\Users\\mathm\\Documents\\efrei\\pp2\\automate\\ProjetAutomate\\Automate"
+    dossier = "~Automate"
     for nom_fichier in os.listdir(dossier):
         fichier_choisi = os.path.join(dossier, nom_fichier)
         process_file(fichier_choisi)#crée un fichier text qui contient toutes les transitions trier dans l'ordre croissant
