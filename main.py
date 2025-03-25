@@ -385,10 +385,11 @@ def completer (data1, fichier_choisi):
     Retourne un tableau 2D de l'automate complet, directement utilisable dans le programme.
     """
     data = copy.deepcopy(data1)
+
+    if not est_determinise(data,fichier_choisi):
+        data = determinisation(data,fichier_choisi)
     if est_determinise_et_complet (data, fichier_choisi) :
         return data
-    elif not est_determinise(data,fichier_choisi):
-        data = determinisation(data,fichier_choisi)
     for i in range (0, len(data)):
         for j in range (2, len(data[i])):
             if data[i][j]=="--":
@@ -474,7 +475,7 @@ def determinisation(data, fichier_choisi):
                 ligne[i + 2] = ",".join(sorted(transitions[etat][symbole])) if transitions[etat][symbole] else "--"
 
             data_determinise.append(ligne)
-
+        data_determinise = completer(data_determinise,fichier_choisi)
         return data_determinise
 
 def minimisation(data1, fichier_choisi):
