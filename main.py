@@ -295,11 +295,12 @@ def complementarisation(data,fichier_choisi):
             copie_data[i][0] = "E/S"
     return copie_data
 
-def est_standard(data, fichier_choisi):
+def est_standard(data1, fichier_choisi):
     """
     Vérifie si l'automate dont le tableau (data) est mis en paramètre est standardisé
     Retourne True si il est standadisé et False si ce n'est pas le cas 
     """
+    data = copy.deepcopy(data1)
     entre = None
     nb_entres = 0
     for i in range (0, len(data)):
@@ -314,12 +315,13 @@ def est_standard(data, fichier_choisi):
                 return False
     return True 
 
-def standardisation(data,fichier_choisi):
+def standardisation(data1,fichier_choisi):
     """
     Prend en paramètre un automate sous forme d'un tableau
     Vérifie si l'automate est déjà standard, si non : standardise
     Retourne un tableau 2D de l'automate standard, directement utilisable dans le programme.
     """
+    data = copy.deepcopy(data1)
     if est_standard(data, fichier_choisi):
         return data
     list_entres = []
@@ -333,19 +335,21 @@ def standardisation(data,fichier_choisi):
     nouv_ligne = ["E","i"] + ["--"] * (len(data[0])-2)
     for i in list_entres:
         for j in range (2,len(data[i])):
-            if nouv_ligne[j]=="--":
-                nouv_ligne[j]=data[i][j]
-            elif data[i][j] not in nouv_ligne[j].split():
-                nouv_ligne[j]+=','+ data[i][j]
+            if data[i][j] != "--":
+                if nouv_ligne[j]=="--":
+                    nouv_ligne[j]=data[i][j]
+                elif data[i][j] not in nouv_ligne[j].split():
+                    nouv_ligne[j]+=','+ data[i][j]
     data.append(nouv_ligne)
     return data
 
 
-def est_determinise(data, fichier_choisi):
+def est_determinise(data1, fichier_choisi):
     """
     Vérifie si l'automate dont le tableau (data) est mis en paramètre est déterminisé
     Retourne True si il est déterminisé et False si ce n'est pas le cas 
     """
+    data = copy.deepcopy(data1)
     nb_entres = 0
     for i in range (0, len(data)):
         if data[i][0]=="E" or data[i][0]=="E/S":
@@ -374,23 +378,23 @@ def est_determinise_et_complet (data, fichier_choisi):
                 return False
     return True
 
-def completer (data, fichier_choisi):
+def completer (data1, fichier_choisi):
     """
     Prend en paramètre un automate sous forme d'un tableau
     Vérifie si l'automate est déterminisé (si non : déterminise) puis rends complet l'automate
     Retourne un tableau 2D de l'automate complet, directement utilisable dans le programme.
     """
-    new_data = data
-    if est_determinise_et_complet (new_data, fichier_choisi) :
-        return new_data
-    elif not est_determinise(new_data,fichier_choisi):
-        new_data = determinisation(new_data,fichier_choisi)
-    for i in range (0, len(new_data)):
-        for j in range (2, len(new_data[i])):
-            if new_data[i][j]=="--":
-                new_data[i][j]="P"
-    new_data.append(["--"] + ["P"] * (len(new_data[0])-1))
-    return new_data
+    data = copy.deepcopy(data1)
+    if est_determinise_et_complet (data, fichier_choisi) :
+        return data
+    elif not est_determinise(data,fichier_choisi):
+        data = determinisation(data,fichier_choisi)
+    for i in range (0, len(data)):
+        for j in range (2, len(data[i])):
+            if data[i][j]=="--":
+                data[i][j]="P"
+    data.append(["--"] + ["P"] * (len(data[0])-1))
+    return data
 
 from collections import deque
 
@@ -471,11 +475,12 @@ def determinisation(data, fichier_choisi):
 
     return data_determinise
 
-def minimisation(data, fichier_choisi):
+def minimisation(data1, fichier_choisi):
     """
     Prend en parametre un automate sous la forme d'une liste 2D et le nom d'un fichier
     Retourne un automate minimisé utilisable dans le reste du programme
     """
+    data = copy.deepcopy(data1)
     # Verification de la determinisation et completion avant de minimiser
     if not est_determinise_et_complet(data,fichier_choisi):
         data=completer(data,fichier_choisi)
@@ -516,7 +521,7 @@ def minimisation(data, fichier_choisi):
                     # verifie si tous les etat pointent vers le meme groupe pour la jieme lettre 
                     # Reste dans le groupe T tous ceux qui pointent vers le même que le 1er
                     # Sont déplacés vers temp tous ceux qui ne pointent pas vers le même etat que le 1er 
-                    if is_in(T,etat):
+                    if is_in(T,etat) or is_in(temp,etat):
                         if viens_de == None: 
                             viens_de="T"
                         elif viens_de!="T":
