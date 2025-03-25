@@ -335,10 +335,11 @@ def standardisation(data1,fichier_choisi):
     nouv_ligne = ["E","i"] + ["--"] * (len(data[0])-2)
     for i in list_entres:
         for j in range (2,len(data[i])):
-            if nouv_ligne[j]=="--":
-                nouv_ligne[j]=data[i][j]
-            elif data[i][j] not in nouv_ligne[j].split():
-                nouv_ligne[j]+=','+ data[i][j]
+            if data[i][j] != "--":
+                if nouv_ligne[j]=="--":
+                    nouv_ligne[j]=data[i][j]
+                elif data[i][j] not in nouv_ligne[j].split():
+                    nouv_ligne[j]+=','+ data[i][j]
     data.append(nouv_ligne)
     return data
 
@@ -520,7 +521,7 @@ def minimisation(data1, fichier_choisi):
                     # verifie si tous les etat pointent vers le meme groupe pour la jieme lettre 
                     # Reste dans le groupe T tous ceux qui pointent vers le même que le 1er
                     # Sont déplacés vers temp tous ceux qui ne pointent pas vers le même etat que le 1er 
-                    if is_in(T,etat):
+                    if is_in(T,etat) or is_in(temp,etat):
                         if viens_de == None: 
                             viens_de="T"
                         elif viens_de!="T":
