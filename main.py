@@ -334,6 +334,8 @@ def standardisation(data1,fichier_choisi):
             data[i][0]="S"
     nouv_ligne = ["E","i"] + ["--"] * (len(data[0])-2)
     for i in list_entres:
+        if data[i][0]=="S":
+            nouv_ligne [0] = "E/S"
         for j in range (2,len(data[i])):
             if data[i][j] != "--":
                 if nouv_ligne[j]=="--":
