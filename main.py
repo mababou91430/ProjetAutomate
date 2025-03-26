@@ -340,8 +340,10 @@ def standardisation(data1,fichier_choisi):
             if data[i][j] != "--":
                 if nouv_ligne[j]=="--":
                     nouv_ligne[j]=data[i][j]
-                elif data[i][j] not in nouv_ligne[j].split(","):
-                    nouv_ligne[j]+=','+ data[i][j]
+                else :
+                    for k in data[i][j].split(","):
+                        if k not in nouv_ligne[j].split(","):
+                            nouv_ligne[j]+=','+ k
     data.append(nouv_ligne)
     return data
 
