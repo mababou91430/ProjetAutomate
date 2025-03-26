@@ -311,7 +311,7 @@ def est_standard(data1, fichier_choisi):
         return False
     for i in range (0, len(data)):
         for j in data[i][2:]:
-            if j == entre:
+            if entre in j.split(","):
                 return False
     return True 
 
@@ -340,7 +340,7 @@ def standardisation(data1,fichier_choisi):
             if data[i][j] != "--":
                 if nouv_ligne[j]=="--":
                     nouv_ligne[j]=data[i][j]
-                elif data[i][j] not in nouv_ligne[j].split():
+                elif data[i][j] not in nouv_ligne[j].split(","):
                     nouv_ligne[j]+=','+ data[i][j]
     data.append(nouv_ligne)
     return data
