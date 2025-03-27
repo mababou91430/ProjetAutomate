@@ -282,9 +282,7 @@ def process_file(input_file):
 
 def complementarisation(data,fichier_choisi):
     copie_data = copy.deepcopy(data)
-    with open(fichier_choisi,"r") as f:
-        nb_etat = int(f.readlines()[1])
-    for i in range(0,nb_etat):
+    for i in range(0,len(data)):
         if copie_data[i][0] == "E/S":
             copie_data[i][0] = "E"
         elif copie_data[i][0] == "S":
