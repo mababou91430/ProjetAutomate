@@ -403,187 +403,126 @@ from collections import deque
 
 def determinisation(data, fichier_choisi):
     """
-    Permet de transformer un automate non déterministe en un automate déterministe avec un tableau 2D en entrée.
+    Transforme un automate non déterministe (avec ou sans epsilon) en un automate déterministe.
     Retourne un tableau 2D déterminisé, directement utilisable dans le programme.
     """
-    print(est_determinise(data,fichier_choisi))
-    if est_determinise_et_complet(data,fichier_choisi):
-        return data
-    elif est_determinise(data,fichier_choisi):
-        return completer(data,fichier_choisi)
     # Récupération des paramètres de l'automate depuis le fichier
-    else:
-        with open(fichier_choisi, "r") as fichier:
-            lines = fichier.readlines()
-            nb_symbole = int(lines[0])  # Nombre de symboles de l'alphabet
-            nb_etat = int(lines[1])  # Nombre d'états
-        if len(data[0][2:]) > nb_symbole:
-            # Extraction des données et détection de l'alphabet
-            transitions = defaultdict(lambda: defaultdict(set))
-            initial_states = set()
-            final_states = set()
-            alphabet = set()
-            
-            for row in data:
-                if len(row) < 2:
-                    continue
-                    
-                state_type, state = row[0], row[1]
-                
-                if state_type == 'E':
-                    initial_states.add(state)
-                elif state_type == 'S':
-                    final_states.add(state)
-                
-                # Détection de l'alphabet et des transitions
-                for i in range(2, len(row)):
-                    if row[i] == '--':
-                        continue
-                        
-                    # Le symbole correspond à la position (a=2, b=3, etc.)
-                    symbol = chr(ord('a') + i - 2)
-                    
-                    # Ignorer explicitement les epsilon
-                    if symbol == 'ep':
-                        continue
-                        
-                    alphabet.add(symbol)
-                    
-                    for target in row[i].split(','):
-                        if target.strip():
-                            transitions[state][symbol].add(target.strip())
-            
-            # Fonction de fermeture epsilon (supprimée car on veut éliminer les epsilon)
-            def epsilon_closure(states):
-                return set(states)  # Pas de traitement epsilon
-            
-            # Initialisation de la déterminisation
-            initial_closure = frozenset(initial_states)
-            
-            state_mapping = {}
-            queue = deque([initial_closure])
-            processed = set([initial_closure])
-            
-            # Nouveau nommage des états
-            state_counter = 0
-            state_mapping[initial_closure] = f"q{state_counter}"
-            state_counter += 1
-            
-            det_transitions = defaultdict(dict)
-            
-            # Processus de déterminisation sans epsilon
-            while queue:
-                current = queue.popleft()
-                current_name = state_mapping[current]
-                
-                for symbol in sorted(alphabet):
-                    # Calcul des états atteignables (sans epsilon)
-                    next_states = set()
-                    for state in current:
-                        next_states.update(transitions.get(state, {}).get(symbol, set()))
-                    
-                    if not next_states:
-                        continue
-                        
-                    next_closure = frozenset(next_states)  # Pas de fermeture epsilon
-                    
-                    if not next_closure:
-                        continue
-                        
-                    if next_closure not in state_mapping:
-                        state_mapping[next_closure] = f"q{state_counter}"
-                        state_counter += 1
-                        queue.append(next_closure)
-                        processed.add(next_closure)
-                    
-                    det_transitions[current_name][symbol] = state_mapping[next_closure]
-            
-            # Construction du tableau de sortie
-            output = []
-            
-            # Déterminer les états finaux
-            det_final_states = set()
-            for state_set in state_mapping:
-                if any(state in final_states for state in state_set):
-                    det_final_states.add(state_mapping[state_set])
-            
-            # Créer les lignes du tableau sans epsilon
-            for state_name in sorted(state_mapping.values(), key=lambda x: int(x[1:])):
-                state_set = next(s for s, n in state_mapping.items() if n == state_name)
-                state_type = 'E' if state_set == initial_closure else 'S'
-                
-                row = [state_type, state_name]
-                for symbol in sorted(alphabet):
-                    row.append(det_transitions.get(state_name, {}).get(symbol, '--'))
-                
-                output.append(row)
-            
-            return output
-        else:
-            # Construction de l'alphabet en fonction du nombre de symboles
-            alphabet = "abcdefghijklmnopqrstuvxyz"[:nb_symbole]
+    with open(fichier_choisi, "r") as fichier:
+        lines = fichier.readlines()
+        nb_symbole = int(lines[0])  # Nombre de symboles de l'alphabet
 
-            # Détection des états initiaux
-            etats_initiaux = set()
-            for ligne in data:
-                if ligne[0] in ["E", "E/S"]:
-                    etats_initiaux.add(ligne[1])
+    # Extraction des données et détection de l'alphabet
+    transitions = defaultdict(lambda: defaultdict(set))
+    initial_states = set()
+    final_states = set()
+    alphabet = []
 
-            # File pour parcourir les nouveaux états déterministes
-            queue = deque()
-            queue.append(",".join(sorted(etats_initiaux)))  # L'état initial est l'union des états initiaux
+    for row in data:
+        if len(row) < 2:
+            continue
 
-            # Structure pour le nouvel automate déterminisé
-            nouveaux_etats = {}
-            transitions = {}
+        state_type, state = row[0], row[1]
 
-            # Traitement de la déterminisation
-            while queue:
-                etat_actuel = queue.popleft()
-                etats_composants = etat_actuel.split(",")
+        if state_type == 'E':
+            initial_states.add(state)
+        elif state_type == 'S':
+            final_states.add(state)
 
-                # Initialisation des nouvelles transitions
-                transitions[etat_actuel] = {symbole: set() for symbole in alphabet}
+        # Détection de l'alphabet et des transitions
+        for i in range(2, len(row)):
+            if row[i] == '--':
+                continue
 
-                for etat in etats_composants:
-                    etat = int(etat)  # Convertir en entier pour indexer data
-                    for i, symbole in enumerate(alphabet):
-                        if data[etat][i + 2] != "--":
-                            transitions[etat_actuel][symbole].update(data[etat][i + 2].split(","))
+            # Le symbole correspond à la position (a=2, b=3, etc.)
+            symbol = chr(ord('a') + i - 2)
+            if symbol not in alphabet:
+                alphabet.append(symbol)
 
-                # Ajout des nouveaux états détectés dans la file
-                for symbole in alphabet:
-                    nouvel_etat = ",".join(sorted(transitions[etat_actuel][symbole]))
-                    if nouvel_etat and nouvel_etat not in nouveaux_etats:
-                        queue.append(nouvel_etat)
-                        nouveaux_etats[nouvel_etat] = None
+            for target in row[i].split(','):
+                if target.strip():
+                    transitions[state][symbol].add(target.strip())
 
-            # Création du tableau 2D déterminisé
-            headers = ["E/S", "E"] + list(alphabet)
-            data_determinise = []
+    # Fonction de fermeture epsilon
+    def epsilon_closure(states):
+        closure = set(states)
+        stack = list(states)
 
-            for etat in sorted(transitions.keys()):
-                ligne = ["--", etat] + ["--"] * len(alphabet)
+        while stack:
+            current = stack.pop()
+            for target in transitions[current].get('ep', []):
+                if target not in closure:
+                    closure.add(target)
+                    stack.append(target)
 
-                # Définition des états initiaux et finaux
-                etats_composants = etat.split(",")
-                etat_initial = any(e in etats_initiaux for e in etats_composants)
-                etat_final = any(data[int(e)][0] in ["S", "E/S"] for e in etats_composants)
+        return closure
 
-                if etat_initial and etat_final:
-                    ligne[0] = "E/S"
-                elif etat_initial:
-                    ligne[0] = "E"
-                elif etat_final:
-                    ligne[0] = "S"
+    # Initialisation de la déterminisation
+    initial_closure = epsilon_closure(initial_states)
 
-                # Remplissage des transitions
-                for i, symbole in enumerate(alphabet):
-                    ligne[i + 2] = ",".join(sorted(transitions[etat][symbole])) if transitions[etat][symbole] else "--"
+    state_mapping = {}
+    queue = deque([frozenset(initial_closure)])
+    processed = set([frozenset(initial_closure)])
 
-                data_determinise.append(ligne)
-            data_determinise = completer(data_determinise,fichier_choisi)
-            return data_determinise
+    # Nouveau nommage des états
+    state_counter = 0
+    state_mapping[frozenset(initial_closure)] = f"q{state_counter}"
+    state_counter += 1
+
+    det_transitions = defaultdict(dict)
+
+    # Processus de déterminisation
+    while queue:
+        current = queue.popleft()
+        current_name = state_mapping[current]
+
+        for symbol in alphabet:
+            # Calcul des états atteignables (avec fermeture epsilon)
+            next_states = set()
+            for state in current:
+                next_states.update(transitions.get(state, {}).get(symbol, set()))
+
+            if not next_states:
+                det_transitions[current_name][symbol] = "P"  # État puits
+                continue
+
+            next_closure = frozenset(epsilon_closure(next_states))
+
+            if next_closure not in state_mapping:
+                state_mapping[next_closure] = f"q{state_counter}"
+                state_counter += 1
+                queue.append(next_closure)
+                processed.add(next_closure)
+
+            det_transitions[current_name][symbol] = state_mapping[next_closure]
+
+    # Construction du tableau de sortie
+    output = []
+
+    # Déterminer les états finaux
+    det_final_states = set()
+    for state_set in state_mapping:
+        if any(state in final_states for state in state_set):
+            det_final_states.add(state_mapping[state_set])
+
+    # Créer les lignes du tableau
+    for state_name in sorted(state_mapping.values(), key=lambda x: int(x[1:])):
+        state_set = next(s for s, n in state_mapping.items() if n == state_name)
+        state_type = 'E' if state_set == initial_closure else '--'
+        if any(state in final_states for state in state_set):
+            state_type = 'S' if state_type == '--' else 'E/S'
+
+        row = [state_type, state_name]
+        for symbol in alphabet:
+            row.append(det_transitions.get(state_name, {}).get(symbol, "P"))
+
+        output.append(row)
+
+    # Ajouter l'état puits "P" si nécessaire
+    if any("P" in row for row in output):
+        row = ["--", "P"] + ["P"] * len(alphabet)
+        output.append(row)
+
+    return output
 
 def minimisation(data1, fichier_choisi):
     """
@@ -820,7 +759,9 @@ if __name__ == "__main__":
     data = creation_tableau(fichier_choisi)
     afficher(data,fichier_choisi)
     deter = determinisation(data, fichier_choisi)
+    stand = standardisation(data,fichier_choisi)
     afficherDeter(deter,fichier_choisi)
+    afficher(stand,fichier_choisi)
         
 
     if os.path.exists(filename):
