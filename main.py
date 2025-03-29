@@ -116,7 +116,7 @@ def creation_tableau(fichier_choisi):
                 data[w][0] = "S"
                 data[w][1] = str(w)
             elif str(w) not in etat_initiaux and str(w) not in etat_finaux:
-                data[w][0] = " "
+                data[w][0] = "--"
                 data[w][1] = str(w)
 
         #Remplissage de Data avec tous les états d'arrivées 
@@ -282,9 +282,7 @@ def process_file(input_file):
 
 def complementarisation(data,fichier_choisi):
     copie_data = copy.deepcopy(data)
-    with open(fichier_choisi,"r") as f:
-        nb_etat = int(f.readlines()[1])
-    for i in range(0,nb_etat):
+    for i in range(0,len(data)):
         if copie_data[i][0] == "E/S":
             copie_data[i][0] = "E"
         elif copie_data[i][0] == "S":
@@ -408,7 +406,6 @@ def determinisation(data, fichier_choisi):
     Permet de transformer un automate non déterministe en un automate déterministe avec un tableau 2D en entrée.
     Retourne un tableau 2D déterminisé, directement utilisable dans le programme.
     """
-    print(est_determinise(data,fichier_choisi))
     if est_determinise_et_complet(data,fichier_choisi):
         return data
     elif est_determinise(data,fichier_choisi):
@@ -553,15 +550,13 @@ def determinisation(data, fichier_choisi):
                             etats_a_deter.append((sorted(nouv_transi)))
                         nouv_ligne[j] = ToString(data, nouv_transi)
                 auto_deter.append(nouv_ligne)
-                count=1
-            print(est_determinise(auto_deter, fichier_choisi))
+                count=1 
             auto_deter = completer(auto_deter, fichier_choisi)
             return auto_deter
 
 def ToString(data, L):
         string = []
         for i in sorted(L):
-            print(i)
             string.append(data[i][1])
         return ",".join(string)
 
@@ -786,35 +781,93 @@ def output_txt(data,fichier_choisi,EPS):
                 fichier.write(ligne_formatee + '\n')
     
 
-if __name__ == "__main__":
-    filename = "Automate/sorted_output.txt"
+def afficher(data, fichier_choisi):
+    alphabet = "abcdefghijklmnopqrstuvxyz"
+    headers = []
+    epsilon = False
+    sorted_output = "Automate/sorted_output.txt"
 
-    # regarde si un fichier "sorted_output.txt" existe
-    if os.path.exists(filename):
-        os.remove(filename)  # supprime le fichier si il existe
-        print(f"{filename} has been deleted.")
-    else:
-        print(f"{filename} does not exist.")
-    time.sleep(1)
+    with open(sorted_output) as test_epsi, open(fichier_choisi,"r") as fc:
+        for i in range(0,int(fc.readlines()[4])):
+            if test_epsi.readline().split()[1] == "ep":
+                epsilon = True
 
-    dossier = "Automate"
-    
-    fichier_choisi = fichier_choix()
-    process_file(fichier_choisi)#crée un fichier text qui contient toutes les transitions trier dans l'ordre croissant
-    supprimer_lignes_vides("Automate/sorted_output.txt")#supprime les lignes vides
-    data = creation_tableau(fichier_choisi)
-    afficher(data,fichier_choisi)
-    print(data)
-    deter = determinisation(data, fichier_choisi)
-    stand = standardisation(data,fichier_choisi)
-    afficher(data,fichier_choisi)
-    afficherDeter(deter,fichier_choisi)
-    afficher(stand,fichier_choisi)
+    headers.extend(["E/S","E"])
+    with open(fichier_choisi, "r") as paramètre:
+        nb_symbole = paramètre.readline()
+        for i in range(0,int(nb_symbole)):
+            headers.append(alphabet[i])
+
+    if epsilon:
+        headers.append("ep")
+
+    print("\n===== Tableau des transitions =====")
+    print(tabulate(data, headers=headers, tablefmt="grid"))
+
+def afficherDeter(data, fichier_choisi):
+    headers = []
+    alphabet = "abcdefghijklmnopqrstuvxyz"
+    headers.extend(["E/S", "E"])
+
+    with open(fichier_choisi, "r") as paramètre:
+        nb_symbole = paramètre.readline()
+        for i in range(0, int(nb_symbole)):
+            headers.append(alphabet[i])
+
+    print("\n===== Automate déterminisé =====")
+    print(tabulate(data, headers=headers, tablefmt="grid"))
+
+def menu_principal(data, fichier_choisi):
+    while True:
+        print("\nMenu :")
+        print("1. Afficher l'automate")
+        print("2. Determiniser")
+        print("3. Minimiser")
+        print("4. Standardiser")
+        print("5. Complementariser")
+        print("6. Choisir un nouvel automate")
+        print("7. Quitter")
+
+        choix = input("Entrez votre choix : ").strip()
+
+        if choix == "1":
+            afficher(data, fichier_choisi)
+        elif choix == "2":
+            data = determinisation(data, fichier_choisi)
+            afficher(data, fichier_choisi)
+        elif choix == "3":
+            data = minimisation(data, fichier_choisi)
+            afficher(data, fichier_choisi)
+        elif choix == "4":
+            data = standardisation(data, fichier_choisi)
+            afficher(data, fichier_choisi)
+        elif choix == "5":
+            data = complementarisation(data, fichier_choisi)
+            afficher(data, fichier_choisi)
         
+        elif choix == "6":
+            return True  # pour relancer
+        elif choix == "7":
+            print("Fermeture du programme.")
+            exit()
+        else:
+            print("Choix invalide, réessaye.")
+    return False  # au cas où
 
-    if os.path.exists(filename):
-        os.remove(filename)  # supprime le fichier si il existe
-        print(f"{filename} has been deleted.")
-    else:
-        print(f"{filename} does not exist.")
+if __name__ == "__main__":
+    while True:
+        filename = "Automate/sorted_output.txt"
 
+        if os.path.exists(filename):
+            os.remove(filename)
+
+        fichier_choisi = fichier_choix()
+        process_file(fichier_choisi)
+        supprimer_lignes_vides("Automate/sorted_output.txt")
+        data = creation_tableau(fichier_choisi)
+
+        afficher(data, fichier_choisi)
+
+        relancer = menu_principal(data, fichier_choisi)
+        if not relancer:
+            break
